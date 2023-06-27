@@ -247,3 +247,38 @@ python3 manage.py collectstatic
 
 ##### Step 34: ทดสอบเข้าใช้งาน admin site
 http://54.169.107.11/admin
+
+
+##### Trip & Trick
+- การ Allow remote connection ของ MySQL บน EC2 instance
+sudo nano /etc/mysql/mysql.conf.d/mysqld.cnf
+
+- แก้ไขไฟล์ mysqld.cnf ดังนี้
+bind-address = 0.0.0.0
+
+- รีสตาร์ท mysql
+sudo service mysql restart
+
+- Login to mysql
+mysql -u root -p
+
+- เรียกดู user ทั้งหมด
+SELECT user, host, plugin FROM mysql.user;
+
+- เปลี่ยน user ที่มี host คือ localhost เป็น %
+UPDATE mysql.user SET host='%' WHERE user='samit';
+
+- สร้าง user สำหรับ remote connection
+CREATE USER 'sirirat'@'%' IDENTIFIED WITH mysql_native_password BY 'xxx';
+
+- Grant all privileges
+GRANT ALL PRIVILEGES ON *.* TO 'sirirat'@'%' WITH GRANT OPTION;
+
+- Flush privileges
+FLUSH PRIVILEGES;
+
+- ออกจาก mysql
+exit
+
+- add inbound rule ใน security group ของ EC2 instance
+type: MYSQL/Aurora
