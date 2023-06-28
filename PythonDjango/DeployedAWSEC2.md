@@ -74,7 +74,7 @@ mysql -u root -p
 CREATE USER 'samit'@'localhost' IDENTIFIED BY 'xxx';
 
 - Grant all privileges
-GRANT ALL PRIVILEGES ON \*.* TO 'samit'@'localhost' WITH GRANT OPTION;
+GRANT ALL PRIVILEGES ON *.* TO 'samit'@'localhost' WITH GRANT OPTION;
 
 - Flush privileges
 FLUSH PRIVILEGES;
@@ -129,7 +129,7 @@ sudo nano .env
 - ตัวอย่าง .env
 SECRET_KEY=django-insecure-g67u&%gp)_zm4_4s)sy(bs4l@j^i&4i+2(rk7&-f)1*28n%52s
 DEBUG=True
-ALLOWED_HOSTS=\*
+ALLOWED_HOSTS=*
 DB_ENGINE=django.db.backends.mysql
 DB_HOST=localhost
 DB_PORT=3306
@@ -191,7 +191,7 @@ sudo nano /etc/nginx/sites-available/django.conf
 
 server {
     listen 80;
-    server_name 54.169.107.11;
+    server_name xx.xxx.xxx.xx;
 
     location = /favicon.ico { access_log off; log_not_found off; }
 
