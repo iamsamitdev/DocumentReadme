@@ -74,7 +74,7 @@ mysql -u root -p
 CREATE USER 'samit'@'localhost' IDENTIFIED BY 'xxx';
 
 - Grant all privileges
-GRANT ALL PRIVILEGES ON *.* TO 'samit'@'localhost' WITH GRANT OPTION;
+GRANT ALL PRIVILEGES ON \*.* TO 'samit'@'localhost' WITH GRANT OPTION;
 
 - Flush privileges
 FLUSH PRIVILEGES;
@@ -107,7 +107,7 @@ DATABASES = {
 python3 --version
 
 ##### Step 9: ติดตั้ง python3-venv, python3-pip, python3-dev, libmysqlclient-dev, build-essential
-sudo apt-get install python3-venv python3-pip, python3-dev default-libmysqlclient-dev build-essential
+sudo apt-get install python3-venv python3-pip python3-dev default-libmysqlclient-dev build-essential
 
 ##### Step 10: สร้าง virtual environment
 python3 -m venv env
@@ -127,9 +127,9 @@ cd harrowgolf_dj/harrowgolf
 sudo nano .env
 
 - ตัวอย่าง .env
-SECRET_KEY=xxx
+SECRET_KEY=django-insecure-g67u&%gp)_zm4_4s)sy(bs4l@j^i&4i+2(rk7&-f)1*28n%52s
 DEBUG=True
-ALLOWED_HOSTS=*
+ALLOWED_HOSTS=\*
 DB_ENGINE=django.db.backends.mysql
 DB_HOST=localhost
 DB_PORT=3306
@@ -147,7 +147,7 @@ pip list
 sudo apt-get install -y nginx
 
 - ทดสอบเข้าไปยัง ip address ของ EC2 instance ด้วย web browser
-http://54.169.107.11/
+http://xx.xxx.xxx.xx/
 
 ##### Step 18: ติดตั้ง gunicorn
 pip install gunicorn
@@ -227,7 +227,7 @@ cd /etc/supervisor/conf.d
 sudo supervisorctl restart all
 
 ##### Step 30: ทดสอบเข้าไปยัง ip address ของ EC2 instance ด้วย web browser
-http://54.169.107.11/
+http://xx.xxx.xxx.xx/
 
 ##### Step 31: migrate database
 cd /home/ubuntu/harrowgolf_dj/harrowgolf
@@ -246,7 +246,7 @@ cd /home/ubuntu/harrowgolf_dj/harrowgolf
 python3 manage.py collectstatic
 
 ##### Step 34: ทดสอบเข้าใช้งาน admin site
-http://54.169.107.11/admin
+http://xx.xxx.xxx.xx/admin
 
 
 ##### Trip & Trick
