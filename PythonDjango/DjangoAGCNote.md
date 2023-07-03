@@ -317,9 +317,312 @@ firstdjango
     └── index.html
 ```
 
+\#13.10 การแทรกค่าของตัวแปรในไฟล์จาก Python ในไฟล์ HTML
+
+\#13.10.1 แก้ไขไฟล์ urls.py
+```python
+urlpatterns = [
+    ...
+    # การสร้าง path และรับค่าจาก view
+    path('test', views.test, name='test'),
+]
+```
+
+\#13.10.2 แก้ไขไฟล์ views.py
+```python
+def test(request):
+    # สร้างตัวแปร data และกำหนดค่าให้กับตัวแปร
+    data = {'title': 'Django AGC', 'message': 'Welcome to Django AGC'}
+
+    # ส่งค่าตัวแปร data ไปยังไฟล์ test.html
+    return render(request, 'test.html', data)
+```
+
+\#13.10.3 สร้างไฟล์ test.html ในโฟลเดอร์ templates บน macOS and Linux and Windows
+```bash
+touch templates/test.html
+```
+
+\#13.10.4 แก้ไขไฟล์ test.html
+```html
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>{{ title }}</title>
+</head>
+<body>
+    <h1>{{ title }}</h1>
+    <p>{{ message }}</p>
+</body>
+</html>
+```
 
 ### ⚡ Day 2
 
+#### Build a Blog Application
 
+##### หัวข้อการเรียนรู้
+1. การสร้างโปรเจ็กต์ใหม่ใน Django
+2. การ Migrate ฐานข้อมูลพื้นฐาน
+3. การสร้างแอพพลิเคชันใน Django
+4. การ Activate แอพพลิเคชั่นใน settings.py
+5. การสร้างโมเดลใน Django
+6. การสร้างและประยุกต์ทำงานกับ model migration
+7. การสร้าง admin site สำหรับ model
+
+##### #1. การสร้างโปรเจ็กต์ Django
+
+\#1.1 activate virtual environment บน windows
+```bash
+env\Scripts\activate
+```
+
+\#1.2 สร้างโปรเจ็กต์ Django ในโฟลเดอร์ DjangoAGC บน macOS and Linux and Windows
+```bash
+django-admin startproject mysite
+```
+
+\#1.3 เปิดโปรเจ็กต์ mysite เข้า vscode
+```bash
+code mysite -r
+```
+
+\#1.4 โครงสร้างโปรเจ็กต์ในตอนนี้
+```bash
+mysite
+├── manage.py
+└── mysite
+    ├── __init__.py
+    ├── asgi.py
+    ├── settings.py
+    ├── urls.py
+    └── wsgi.py
+```
+
+##### #2. การ migrate ฐานข้อมูลเริ่มต้น
+
+```bash
+python manage.py migrate
+```
+
+\#2.1 ทดสอบ runserver
+```bash
+python manage.py runserver
+```
+
+##### #3. การสร้างแอพพลิเคชันใน Django
+
+\#3.1 สร้างแอพพลิเคชัน blog ในโปรเจ็กต์ mysite
+```bash
+python manage.py startapp blog
+```
+
+\#3.2 โครงสร้างโปรเจ็กต์ในตอนนี้
+```bash
+mysite # โปรเจ็กต์ mysite
+├── blog # สร้างแอพพลิเคชัน blog
+│   ├── __init__.py
+│   ├── admin.py
+│   ├── apps.py
+│   ├── migrations
+│   │   └── __init__.py
+│   ├── models.py
+│   ├── tests.py
+│   └── views.py
+├── manage.py
+└── mysite # โปรเจ็กต์ mysite
+    ├── __init__.py
+    ├── asgi.py
+    ├── settings.py
+    ├── urls.py
+    └── wsgi.py
+    db.sqlite3 # ฐานข้อมูลเริ่มต้น
+```
+
+##### #4. Activate แอพพลิเคชัน blog ในไฟล์ mysite/settings.py
+```python
+INSTALLED_APPS = [
+    ...
+    'blog.apps.BlogConfig', # แอพพลิเคชัน blog
+]
+```
+
+##### #5. การสร้างโมเดลใน Django
+
+\#5.1 แก้ไขไฟล์ blog/models.py
+```python
+from django.db import models
+
+# สร้างโมเดล Post
+class Post(models.Model):
+    title = models.CharField(max_length=250)
+    slug = models.SlugField(max_length=250)
+    body = models.TextField()
+
+    def __str__(self):
+        return self.title
+```
+\#5.2 เพิ่ม datetime ในไฟล์ blog/models.py
+```python
+from django.db import models
+from django.utils import timezone # เพิ่ม datetime
+
+# สร้างโมเดล Post
+class Post(models.Model):
+    title = models.CharField(max_length=250)
+    slug = models.SlugField(max_length=250)
+    body = models.TextField()
+    publish = models.DateTimeField(default=timezone.now) # เพิ่ม datetime
+    created = models.DateTimeField(auto_now_add=True) # เพิ่ม datetime
+    updated = models.DateTimeField(auto_now=True) # เพิ่ม datetime
+
+    def __str__(self):
+        return self.title
+```
+
+\#5.3 การกำหนดการเรียงข้อมูลในโมเดล Post ในไฟล์ blog/models.py
+```python
+from django.db import models
+from django.utils import timezone
+
+class Post(models.Model):
+    title = models.CharField(max_length=250)
+    slug = models.SlugField(max_length=250)
+    body = models.TextField()
+    publish = models.DateTimeField(default=timezone.now)
+    created = models.DateTimeField(auto_now_add=True)
+    updated = models.DateTimeField(auto_now=True)
+
+    class Meta: # การกำหนดการเรียงข้อมูลในโมเดล Post
+        ordering = ['-publish'] # เรียงลำดับโพสต์จากวันที่ล่าสุดไปยังเก่าสุด
+
+    def __str__(self):
+        return self.title
+```
+
+\#5.4 การเพิ่ม index ในโมเดล Post ในไฟล์ blog/models.py
+```python
+from django.db import models
+from django.utils import timezone
+
+class Post(models.Model):
+    title = models.CharField(max_length=250)
+    slug = models.SlugField(max_length=250)
+    body = models.TextField()
+    publish = models.DateTimeField(default=timezone.now)
+    created = models.DateTimeField(auto_now_add=True)
+    updated = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ['-publish']
+        indexes = [
+            models.Index(fields=['-publish']), # เพิ่ม index
+        ]
+
+    def __str__(self):
+        return self.title
+```
+
+\#5.5 เพิ่มฟิลด์ status ในโมเดล Post ในไฟล์ blog/models.py
+```python
+from django.db import models
+from django.utils import timezone
+
+class Post(models.Model):
+
+    class Status(models.TextChoices): # เพิ่มฟิลด์ status
+        DRAFT = 'DF', 'Draft'
+        PUBLISHED = 'PB', 'Published'
+    
+    title = models.CharField(max_length=250)
+    slug = models.SlugField(max_length=250)
+    body = models.TextField()
+    publish = models.DateTimeField(default=timezone.now)
+    created = models.DateTimeField(auto_now_add=True)
+    updated = models.DateTimeField(auto_now=True)
+    status = models.CharField(max_length=2, 
+                                choices=Status.choices, 
+                                default=Status.DRAFT) # เพิ่มฟิลด์ status
+
+    class Meta:
+        ordering = ['-publish']
+        indexes = [
+            models.Index(fields=['-publish']),
+        ]
+
+    def __str__(self):
+        return self.title
+```
+\#5.6 ทดสอบเรียกดู status ผ่าน shell
+```bash
+python manage.py shell
+```
+```python
+from blog.models import Post
+Post.Status.choices
+Post.Status.labels
+Post.Status.values
+Post.Status.names
+```
+
+\#5.7 สร้างความสัมพันธ์ในโมเดล Post กับ User ในไฟล์ blog/models.py
+```python
+from django.db import models
+from django.utils import timezone
+from django.contrib.auth.models import User # เพิ่มความสัมพันธ์กับ User
+
+class Post(models.Model):
+    ...
+    author = models.ForeignKey(User, 
+                                on_delete=models.CASCADE, 
+                                related_name='blog_posts') # เพิ่มความสัมพันธ์กับ User
+
+    class Meta:
+        ordering = ['-publish']
+        indexes = [
+            models.Index(fields=['-publish']),
+        ]
+
+    def __str__(self):
+        return self.title
+```
+
+##### #6. การสร้างไฟล์ migrations และ migrate ฐานข้อมูล
+\#6.1 สร้างไฟล์ migrations ในโมเดล blog
+```bash
+python manage.py makemigrations blog
+```
+
+\#6.2 เรียกดูไฟล์ migrations ในโมเดล blog
+```bash
+python manage.py sqlmigrate blog 0001
+```
+
+\#6.3 ทำการ migrate ฐานข้อมูล
+```bash
+python manage.py migrate
+```
+
+##### #7. การสร้าง admin site สำหรับ model
+\#7.1 สร้าง superuser
+```bash
+python manage.py createsuperuser
+```
+
+\#7.2 ทดสอบเข้า admin site
+```bash
+python manage.py runserver
+```
+เข้า admin site ที่ http://127.0.0.1:8000/admin
+
+\#7.3 เพิ่มโมเดล Post ในไฟล์ blog/admin.py
+```python
+from django.contrib import admin
+from .models import Post
+
+# Register your models here.
+admin.site.register(Post)
+```
 
 
