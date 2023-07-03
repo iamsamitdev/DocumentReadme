@@ -122,7 +122,7 @@ type nul > views.py
 ```
 
 \#10.4 แก้ไขไฟล์ views.py
-```bash
+```python
 from django.http import HttpResponse
 
 def index(request):
@@ -130,7 +130,7 @@ def index(request):
 ```
 
 \#10.5 แก้ไขไฟล์ urls.py
-```bash
+```python
 from django.contrib import admin
 from django.urls import path
 from . import views
@@ -143,7 +143,7 @@ urlpatterns = [
 
 ##### #11. การกำหนด Path แบบมี Parameter
 \#11.1 แก้ไขไฟล์ views.py
-```bash
+```python
 from django.http import HttpResponse
 
 def index(request):
@@ -154,7 +154,7 @@ def hello(request, name):
 ```
 
 \#11.2 แก้ไขไฟล์ urls.py
-```bash
+```python
 from django.contrib import admin
 from django.urls import path
 from . import views
@@ -172,23 +172,35 @@ urlpatterns = [
 mkdir templates
 ```
 
-\#12.2 สร้างโฟลเดอร์ templates ในโปรเจคบน Windows
+\#12.2 แก้ไขไฟล์ settings.py
+```python
+TEMPLATES = [
+    {
+        'BACKEND': 'django.template.backends.django.DjangoTemplates',
+        'DIRS': ['templates'], # แก้ไขบรรทัดนี้
+        'APP_DIRS': True,
+        ...
+    },
+]
+```
+
+\#12.3 สร้างโฟลเดอร์ templates ในโปรเจคบน Windows
 ```bash
 md templates
 ```
 
-\#12.3 สร้างไฟล์ index.html ในโฟลเดอร์ templates บน macOS and Linux
+\#12.4 สร้างไฟล์ index.html ในโฟลเดอร์ templates บน macOS and Linux
 ```bash
 touch templates/index.html
 ```
 
-\#12.4 สร้างไฟล์ index.html ในโฟลเดอร์ templates บน Windows
+\#12.5 สร้างไฟล์ index.html ในโฟลเดอร์ templates บน Windows
 ```bash
 type nul > templates/index.html
 ```
 
-\#12.5 แก้ไขไฟล์ index.html
-```bash
+\#12.6 แก้ไขไฟล์ index.html
+```html
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -201,8 +213,8 @@ type nul > templates/index.html
 </html>
 ```
 
-\#12.6 แก้ไขไฟล์ views.py
-```bash
+\#12.7 แก้ไขไฟล์ views.py
+```python
 from django.http import HttpResponse
 from django.shortcuts import render
 
@@ -210,6 +222,103 @@ def index(request):
     return render(request, 'index.html')
 ```
 
+##### #13. การสร้าง Static File ใน Django
+\#13.1 สร้างโฟลเดอร์ static ในโปรเจคบน macOS and Linux and Windows
+```bash
+mkdir static
+```
+
+\#13.2 แก้ไขไฟล์ settings.py
+```python
+import os
+
+STATIC_URL = 'static/'
+
+# แก้ไขบรรทัดนี้สำหรับ development
+STATICFILES_DIRS = [
+    os.path.join(BASE_DIR, 'static'),
+]
+# แก้ไขบรรทัดนี้สำหรับ production
+# STATIC_ROOT = os.path.join(BASE_DIR, 'static')
+```
+
+\#13.3 สร้างไฟล์ style.css ในโฟลเดอร์ static/css บน macOS and Linux and Windows
+```bash
+mkdir static/css/style.css
+```
+
+\#13.4 แก้ไขไฟล์ style.css
+```css
+body {
+    background-color: #eb5454;
+    font-family: Arial, Helvetica, sans-serif;
+}
+```
+
+\#13.5 แก้ไขไฟล์ index.html
+```html
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Django AGC</title>
+    <link rel="stylesheet" href="{% static 'css/style.css' %}">
+</head>
+<body>
+    <h1>Welcome to Django AGC</h1>
+</body>
+</html>
+```
+
+\#13.6 การใส่รูปภาพในโปรเจ็กต์ที่ path /static/images/mypic.png
+```bash
+mkdir static/images
+```
+
+\#13.7 คัดลอกไฟล์ mypic.png ไปยังโฟลเดอร์ static/images
+```bash
+cp mypic.png static/images
+```
+
+\#13.8 แก้ไขไฟล์ index.html
+```html
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Django AGC</title>
+    <link rel="stylesheet" href="{% static '/css/style.css' %}">
+</head>
+<body>
+    <h1>Welcome to Django AGC</h1>
+    <img src="{% static '/images/mypic.png' %}" alt="My Picture">
+</body>
+</html>
+```
+
+\#13.9 โครงสร้างโปรเจ็กต์ในตอนนี้
+```bash
+firstdjango
+├── firstdjango
+│   ├── __init__.py
+│   ├── asgi.py
+│   ├── settings.py
+│   ├── urls.py
+│   └── wsgi.py
+├── manage.py
+├── static
+│   ├── css
+│   │   └── style.css
+│   └── images
+│       └── mypic.png
+└── templates
+    └── index.html
+```
+
+
+### ⚡ Day 2
 
 
 

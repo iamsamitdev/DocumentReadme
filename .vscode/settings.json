@@ -1,6 +1,6 @@
 {
-    "workbench.activityBar.visible": false,
-    "workbench.statusBar.visible": false,
+    "workbench.activityBar.visible": true,
+    "workbench.statusBar.visible": true,
     "editor.minimap.enabled": false,
     "editor.renderWhitespace": "none",
 }
