@@ -625,4 +625,341 @@ from .models import Post
 admin.site.register(Post)
 ```
 
+### ⚡ Day 3
+
+#### Build an Inventory Management System
+
+##### หัวข้อการเรียนรู้
+1. การติดตั้งฐานข้อมูล MySQL ผ่าน XAMPP
+2. ดาวน์โหลด Template Bootstrap 4 จาก Start Bootstrap
+3. การสร้างโปรเจ็กต์ Django ชื่อ inventory
+4. การสร้างแอพพลิเคชันใน Django ชื่อ stock
+5. การ Activate แอพพลิเคชั่นใน settings.py
+6. ปรับโครงสร้างโปรเจ็กต์ Django ใช้ Template Bootstrap 4
+7. การสร้างโมเดลในแอพพลิเคชัน stock
+8. การสร้างไฟล์ migrations และ migrate ฐานข้อมูล
+9. สร้าง superuser และเข้า admin site
+
+
+##### #1. การติดตั้งฐานข้อมูล MySQL ผ่าน XAMPP
+
+\#1.1 ดาวน์โหลด XAMPP จาก https://www.apachefriends.org/download.html
+
+\#1.2 ติดตั้ง XAMPP และเปิดใช้งาน Apache และ MySQL
+
+\#1.3 เข้าใช้งาน phpMyAdmin ที่ http://localhost/phpmyadmin/
+
+\#1.4 สร้างฐานข้อมูลชื่อ djangoinventory
+
+##### #2. ดาวน์โหลด Template Bootstrap 4 จาก Start Bootstrap
+
+\#2.1 ดาวน์โหลด Template Bootstrap 4 จาก https://startbootstrap.com/themes/sb-admin-2/
+
+\#2.2 แตกไฟล์ sb-admin-2.zip และนำไปไว้ที่โฟลเดอร์ inventory/templates/
+
+##### #3. การสร้างโปรเจ็กต์ Django
+
+\#3.1 สร้าง environment ชื่อ myenv
+```bash
+python -m venv myenv
+```
+
+\#3.2 Activate environment
+```bash
+myenv\Scripts\activate
+```
+
+\#3.3 ติดตั้ง Django 4.1.7
+```bash
+pip install django==4.1.7
+```
+
+\#3.4 ติดตั้ง mysqlclient 2.1.1
+```bash
+pip install mysqlclient==2.1.1
+```
+
+\#3.5 สร้างโปรเจ็กต์ Django ชื่อ inventory
+```bash
+django-admin startproject inventory
+```
+
+##### #4. การสร้างแอพพลิเคชันใน Django ชื่อ stock
+
+\#4.1 สร้างแอพพลิเคชันใน Django ชื่อ stock
+```bash
+python manage.py startapp stock
+```
+
+##### #5. การ Activate แอพพลิเคชั่นใน settings.py
+
+\#5.1 แก้ไขไฟล์ inventory/settings.py
+```python
+INSTALLED_APPS = [
+    ...
+    'stock.apps.StockConfig', # เพิ่มแอพพลิเคชั่น stock
+]
+```
+
+\#5.2 แก้ไข Timezone ในไฟล์ inventory/settings.py
+```python
+TIME_ZONE = 'Asia/Bangkok'
+```
+
+\#5.3 แก้ไข template ในไฟล์ inventory/settings.py
+```python
+import os
+
+TEMPLATES = [
+    {
+        ...
+        'DIRS': [os.path.join(BASE_DIR, 'templates')], # เพิ่ม template
+        ...
+    },
+]
+```
+
+\#5.4 แก้ไข static ในไฟล์ inventory/settings.py
+```python
+STATIC_URL = '/static/'
+
+STATICFILES_DIRS = [
+    os.path.join(BASE_DIR, 'static'), # เพิ่ม static
+]
+```
+
+\#5.5 แก้ไข Database Connection ในไฟล์ inventory/settings.py
+```python
+DATABASES = {
+    'default': {
+        'ENGINE': 'django.db.backends.mysql',
+        'NAME': 'djangoinventory',
+        'USER': 'root',
+        'PASSWORD': '',
+        'HOST': 'localhost',
+        'PORT': '3306',
+    }
+}
+```
+
+##### #6. ปรับโครงสร้างโปรเจ็กต์ Django ใช้ Template Bootstrap 4
+
+\#6.1 แก้ไขไฟล์ inventory/urls.py
+```python
+from django.contrib import admin
+from django.urls import path, include # เพิ่ม include
+
+urlpatterns = [
+    path('admin/', admin.site.urls),
+    path('', include('stock.urls')), # เพิ่ม include
+]
+```
+
+\#6.2 แก้ไขไฟล์ stock/urls.py
+```python
+from django import views
+from django.urls import path
+from . import views
+
+urlpatterns = [
+    # Frontend
+    path('', views.index, name='index'), # เพิ่ม path
+    path('about', views.about, name='about'), # เพิ่ม path
+
+    # Authentication
+    path('register', views.register, name='register'), # เพิ่ม path
+    path('login', views.login, name='login'), # เพิ่ม path
+
+    # Backend
+    path('backend/dashboard', views.dashboard, name='dashboard'), # เพิ่ม path
+    path('backend/logout', views.logout, name='logout'), # เพิ่ม path
+
+]
+```
+
+\#6.3 แก้ไขไฟล์ stock/views.py
+```python
+from django.shortcuts import render, redirect
+from django.contrib.auth.forms import UserCreationForm, AuthenticationForm
+from django.contrib.auth import login, logout
+from django.contrib import messages
+
+# Create your views here.
+def index(request):
+    return render(request, 'index.html')
+
+def about(request):
+    return render(request, 'about.html')
+
+def register(request):
+    if request.method == 'POST':
+        form = UserCreationForm(request.POST)
+        if form.is_valid():
+            user = form.save()
+            login(request, user)
+            messages.success(request, 'Register successfully')
+            return redirect('dashboard')
+        else:
+            for msg in form.error_messages:
+                messages.error(request, f'{msg}: {form.error_messages[msg]}')
+    form = UserCreationForm
+    return render(request, 'register.html', {'form': form})
+
+def login(request):
+    if request.method == 'POST':
+        form = AuthenticationForm(request, data=request.POST)
+        if form.is_valid():
+            user = form.get_user()
+            login(request, user)
+            messages.success(request, 'Login successfully')
+            return redirect('dashboard')
+        else:
+            messages.error(request, 'Invalid username or password')
+    form = AuthenticationForm()
+    return render(request, 'login.html', {'form': form})
+
+def dashboard(request):
+    return render(request, 'backend/dashboard.html')
+
+def logout(request):
+    logout(request)
+    messages.success(request, 'Logout successfully')
+    return redirect('login')
+```
+
+\#6.4 สร้างไฟล์ base.html ในโฟลเดอร์ inventory/templates/
+```html
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>{% block title %}{% endblock %}</title>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+</head>
+
+<body>
+    {% block content %}{% endblock %
+    <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+</body>
+
+</html>
+
+```
+
+\#6.5 สร้างไฟล์ index.html ในโฟลเดอร์ inventory/templates/
+```html
+{% extends 'base.html' %}
+
+{% block title %}Home{% endblock %}
+
+{% block content %}
+    <h1>Home</h1>
+{% endblock %}
+```
+
+\#6.6 สร้างไฟล์ about.html ในโฟลเดอร์ inventory/templates/
+```html
+{% extends 'base.html' %}
+
+{% block title %}About{% endblock %}
+
+{% block content %}
+    <h1>About</h1>
+{% endblock %}
+```
+
+\#6.7 สร้างไฟล์ register.html ในโฟลเดอร์ inventory/templates/
+```html
+{% extends 'base.html' %}
+
+{% block title %}Register{% endblock %}
+
+{% block content %}
+    <h1>Register</h1>
+    <form method="POST">
+        {% csrf_token %}
+        {{ form.as_p }}
+        <button type="submit">Register</button>
+    </form>
+{% endblock %}
+```
+
+\#6.8 สร้างไฟล์ login.html ในโฟลเดอร์ inventory/templates/
+```html
+{% extends 'base.html' %}
+
+{% block title %}Login{% endblock %}
+
+{% block content %}
+    <h1>Login</h1>
+    <form method="POST">
+        {% csrf_token %}
+        {{ form.as_p }}
+        <button type="submit">Login</button>
+    </form>
+{% endblock %}
+```
+
+\#6.9 สร้างโฟลเดอร์ inventory/templates/backend
+```bash
+$ mkdir inventory/templates/backend
+```
+
+\#6.10 สร้างไฟล์ dashboard.html ในโฟลเดอร์ inventory/templates/backend/
+```html
+{% extends 'base.html' %}
+
+{% block title %}Dashboard{% endblock %}
+
+{% block content %}
+    <h1>Dashboard</h1>
+{% endblock %}
+```
+
+##### #7. สร้างโมเดลสำหรับเก็บข้อมูลสินค้า
+
+\#7.1 แก้ไขไฟล์ stock/models.py
+```python
+from django.db import models
+
+# Create your models here.
+from django.db import models
+
+# stock product 
+class Product(models.Model):
+    product_name = models.CharField(max_length=128)
+    product_detail = models.TextField()
+    product_barcode = models.CharField(max_length=13)
+    product_qty = models.IntegerField()
+    product_price = models.DecimalField(max_digits=7, decimal_places=2)
+    product_image = models.CharField(max_length=128)
+    product_status = models.IntegerField()
+
+    def __str__(self):
+        return self.product_name
+```
+
+
+##### #8. การสร้างไฟล์ migrations และ migrate ฐานข้อมูล
+
+\#8.1 สร้างไฟล์ migrations และ migrate ฐานข้อมูล
+```bash
+$ python manage.py makemigrations
+$ python manage.py migrate
+```
+
+##### #9. สร้าง superuser และเข้า admin site
+
+\#9.1 สร้าง superuser
+```bash
+$ python manage.py createsuperuser
+```
+
+\#9.2 เข้า admin site โดยใช้ username และ password ที่ได้สร้างไว้
+```bash
+$ python manage.py runserver
+```
+
+    
+
 
