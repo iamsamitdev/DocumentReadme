@@ -134,7 +134,7 @@ Production จริง ก็นำไปทั้งก้อน Container น
 
 ##### โครงสร้างและสถาปัตยกรรมของ Docker
 
-![alt text](image.png)
+![alt text](image0.png)
 
 ##### การใช้งาน Docker CLI
 
@@ -344,74 +344,518 @@ services:
       - httpd_network
 ```
 
+### ⚡ Day 2
+
+- [ ] Section 3: ทบทวนการใช้งาน Docker 
+การใช้งาน Docker Compose สำหรับ LAMP Stack
+- [ ] Section 4: พื้นฐานและภาพรวม Kubernetes
+
 ##### การใช้งาน Docker Compose สำหรับ LAMP Stack
 
 ![alt text](image-19.png)
 
-![alt text](image-20.png)
+![alt text](image-24.png)
+
+php/Dockerfile
+```Dockerfile
+# Base Image: php:8.3-fpm-alpine
+FROM php:8.3-fpm-alpine
+
+# Install Dependencies
+RUN docker-php-ext-install pdo_mysql mysqli bcmath
+
+# Set Working Directory
+WORKDIR /var/www/html/
+
+# Expose Port
+EXPOSE 9000
+
+```
+
+nginx/nginx.conf
+```nginx
+server {
+    listen 80;
+    index index.php index.html;
+    server_name localhost;
+    root /var/www/html;
+    location / {
+        try_files $uri $uri/ /index.php?$query_string;
+    }
+    location ~ \.php$ {
+        try_files $uri =404;
+        fastcgi_split_path_info ^(.+\.php)(/.+)$;
+        fastcgi_pass php:9000;
+        fastcgi_index index.php;
+        include fastcgi_params;
+        fastcgi_param SCRIPT_FILENAME $document_root$fastcgi_script_name;
+        fastcgi_param PATH_INFO $fastcgi_path_info;
+    }
+}
+
+```
+
+mysql/initdb/titanic.sql
+```sql
+SET SQL_MODE = "NO_AUTO_VALUE_ON_ZERO";
+SET AUTOCOMMIT = 0;
+START TRANSACTION;
+SET time_zone = "+00:00";
+
+CREATE TABLE `titanic` (
+  `index` bigint(20) DEFAULT NULL,
+  `PassengerId` bigint(20) DEFAULT NULL,
+  `Survived` bigint(20) DEFAULT NULL,
+  `Pclass` bigint(20) DEFAULT NULL,
+  `Name` text,
+  `Sex` text,
+  `Age` double DEFAULT NULL,
+  `SibSp` bigint(20) DEFAULT NULL,
+  `Parch` bigint(20) DEFAULT NULL,
+  `Ticket` text,
+  `Fare` double DEFAULT NULL,
+  `Cabin` text,
+  `Embarked` text
+) ENGINE=InnoDB DEFAULT CHARSET=latin1;
+
+INSERT INTO `titanic` (`index`, `PassengerId`, `Survived`, `Pclass`, `Name`, `Sex`, `Age`, `SibSp`, `Parch`, `Ticket`, `Fare`, `Cabin`, `Embarked`) VALUES
+(0, 1, 0, 3, 'Braund, Mr. Owen Harris', 'male', 22, 1, 0, 'A/5 21171', 7.25, NULL, 'S')
+
+ALTER TABLE `titanic`
+  ADD KEY `ix_titanic_index` (`index`);
+COMMIT;
+```
+
+public_html/index.php
+
+```php
+<?php
+// variable for connecting to the database
+$host = "mysql";
+$username = "admin";
+$password = "1234";
+
+// connect to the database
+$connect = mysqli_connect($host, $username, $password);
+
+// set the database
+$db = mysqli_select_db($connect, "sample_db");
+
+// check if the connection is successful
+if ($connect) {
+    // echo "Connection database and selected db successful";
+
+    $sql = "SELECT * FROM titanic limit 10";
+    $result = mysqli_query($connect, $sql);
+    $data = array();
+    while ($row = mysqli_fetch_assoc($result)) {
+        // echo "<pre>";
+        // print_r($row);
+        // echo "</pre>";
+        $data[] = $row;
+    }
+
+    header('Content-Type: application/json; charset=utf-8');
+    echo json_encode($data);
+    
+} else {
+    echo "Connection database failed!";
+}
+```
+
+docker-compose.yml
 
 ```yaml
+# สร้าง Network
 networks:
-  lemp_network:
-    name: lemp_network
+  web_network:
+    name: lamp_network
     driver: bridge
 
+# สร้าง Service
 services:
-
-  # mysql service
+  # MySQL Service
   mysql:
     image: mysql:latest
-    container_name: lemp_mysql
-    restart: always
+    container_name: lamp_mysql
     environment:
       - MYSQL_ROOT_PASSWORD=1234
       - MYSQL_DATABASE=sample_db
       - MYSQL_USER=admin
       - MYSQL_PASSWORD=1234
     volumes:
-      - ./mysql/initdb/:/docker-entrypoint-initdb.d/
-      - ./mysql/data/:/var/lib/mysql/
+      - ./mysql/data:/var/lib/mysql/ # สร้าง Volume สำหรับเก็บข้อมูล
+      - ./mysql/initdb/:/docker-entrypoint-initdb.d/ # init script สำหรับสร้าง Table
     ports:
-      - 4406:3306
+      - "4406:3306"
     networks:
-      - lemp_network
-
-  # php service
+      - web_network
+    restart: always
+  # PHP Service
   php:
     depends_on:
       - mysql
-    build: ./php
-    container_name: lemp_php
-    restart: always
+    build:
+      context: ./php
+      dockerfile: Dockerfile
+    container_name: lamp_php
     volumes:
       - ./public_html/:/var/www/html/
     expose:
       - 9000
     networks:
-      - lemp_network
-
-  # nginx service
+      - web_network
+    restart: always
+  # Nginx Service
   nginx:
     depends_on:
       - php
     image: nginx:stable-alpine
-    container_name: lemp_nginx
-    restart: always
+    container_name: lamp_nginx
     volumes:
       - ./public_html/:/var/www/html/
       - ./nginx/nginx.conf:/etc/nginx/conf.d/default.conf:ro
     ports:
-      - 8800:80
+      - "8080:80"
     networks:
-      - lemp_network
+      - web_network
+    restart: always
 ```
 
 ##### การใช้งาน Docker Compose สำหรับ MERN Stack
 
-![alt text](image-21.png)
+![alt text](image-25.png)
 
-![alt text](image-22.png)
+![alt text](image-26.png)
 
+```yaml
+networks:
+  app_network:
+    name: app_network
+    driver: bridge
+
+services:
+  
+  # PostgresSQL Service
+  postgres:
+    image: postgres:latest
+    container_name: postgres_db
+    environment:
+      POSTGRES_USER: myuser
+      POSTGRES_PASSWORD: 123456
+      POSTGRES_DB: storedb
+    ports:
+      - "6432:5432"
+    volumes:
+      - ./volumes/postgres:/var/lib/postgresql/data # Mount volume
+      - ./sql/init_postgresql.sql:/docker-entrypoint-initdb.d/init.sql # init script
+    networks:
+      - app_network
+    restart: always
+  
+  # MySQL Service
+  mysql:
+    image: mysql:latest
+    container_name: mysql_db
+    environment:
+      MYSQL_ROOT_PASSWORD: 123456
+      MYSQL_DATABASE: storedb
+      MYSQL_USER: myuser
+      MYSQL_PASSWORD: 123456
+    ports:
+      - "5506:3306"
+    volumes:
+      - ./volumes/mysql:/var/lib/mysql  # Mount volume สำหรับ MySQL
+      - ./sql/init_mysql.sql:/docker-entrypoint-initdb.d/init.sql
+    networks:
+      - app_network
+    restart: always
+  
+  # SQLite Service
+  sqlite:
+    platform: linux/x86_64
+    image: nouchka/sqlite3
+    container_name: sqlite_db
+    environment:
+      DB_PATH: /data/sqlite/storedb.db
+    volumes:
+      - ./data:/data  # Mount volume สำหรับ SQLite
+    command: tail -f /dev/null # Keep container running
+    networks:
+      - app_network
+    restart: always
+
+  # SQL Server Service (Azure SQL Edge)
+  mssql:
+    image: mcr.microsoft.com/azure-sql-edge:latest
+    container_name: mssql_db
+    environment:
+      ACCEPT_EULA: Y
+      MSSQL_SA_PASSWORD: "MyPassword@123"
+      MSSQL_DATABASE: storedb
+    ports:
+      - "1533:1433"
+    volumes:
+      - ./volumes/mssql:/var/opt/mssql  # Mount volume สำหรับ SQL Server
+      - ./sql/init_sqlserver.sql:/var/opt/mssql/init.sql
+    networks:
+      - app_network
+    restart: always
+
+  # MongoDB Service
+  mongo:
+    image: mongo:latest
+    container_name: mongo_db
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: myuser
+      MONGO_INITDB_ROOT_PASSWORD: 123456
+      MONGO_INITDB_DATABASE: storedb
+    ports:
+      - "37017:27017"
+    volumes:
+      - ./volumes/mongodb:/data/db  # Mount volume สำหรับ MongoDB
+      - ./sql/init_mongodb.json:/docker-entrypoint-initdb.d/init.json
+    networks:
+      - app_network
+    restart: always
+```
+
+##### การ Tag และ Push Image ไปยัง Docker Hub
+
+![alt text](image-23.png)
+
+```bash
+docker tag my-node-app:1.0 my-node-app:latest
+docker logout
+docker login
+docker push my-node-app:latest
+```
+
+#### Section 4: พื้นฐานและภาพรวม Kubernetes
+
+##### Kubernetes คืออะไร?
+
+ต้นกำเนิดของ K8s นั้นเกิดมาจาก Pain ที่บริษัท Google เจอมาตลอด ในการพยายามจะจัดการ Data Center ของตัวเองมานานกว่า 15 ปี 
+
+Kubernetes คือ container orchestration engine จุดประสงค์หลักของ kubernetes คือการจัดการ container deployments 
+
+ในปัจจุบันทุกๆ application กำลังจะใช้ Microservices architecture มากกว่า Monolithic architecture และ วิธีการใช้งาน microservices architecture เหล่านั้นจะออกแบบโดย containerization technology manage containers at a large scale, คือเราใช้ kubernetes
+
+##### จุดเด่นของ Kubernetes
+Container Clustering :  สามารถทำ Configuration  เพื่อสั่งระบบให้ทำงานตามที่ต้องการโดยอัตโนมัติ (เรียกได้อีกแบบว่าเป็นการกำหนด Desired State)
+Auto Scaling : รองรับการเพิ่มหรือลดทรัพยากรได้โดยอัตโนมัติตามความต้องการ
+Auto Self-healing : รองรับการทำงานแบบ HA เพื่อช่วยให้ระบบสามารถทำงานได้อย่างปกติ
+Auto Binpacking : จัดสรรทรัพยากรสำหรับคอนเทนเนอร์โดยอัตโนมัติ  
+Load Balancing : แบ่งการทำงานระหว่างคอนเทนนอร์ได้อย่างเหมาะสมและมีประสิทธิภาพสูงสุด
+Zero Downtime : รองรับการอัปเดตระบบแบบไม่มี Downtime
+Dashboard : มีแดชบอร์ดสำหรับควบคุมและบริหารจัดการทรัพยากร
+Community :  มีผู้ใช้งานจากทั่วโลกช่วยพัฒนาและอัปเดตฟีเจอร์ใหม่ ๆ อยู่ตลอดเวลา
+
+##### องค์ประกอบของ Kubernetes
+![alt text](image-27.png)
+
+Kubernetes นั้นประกอบด้วย 2 Components หลักๆ คือ
+
+1. Kubernetes Master (control plane)
+หน้าที่หลักๆ คือ คอยควบคุมและดูแล Kubernetes node ต่างๆ เช่น คอย check ว่ามีตัวไหนพังหรือเปล่าหรือต้องการย้าย Container นี้ไปรันบน เครื่องอื่นหรือเปล่า โดยที่ตัว Kubernetes master นั้นไม่สามารถรัน Container ต่างๆ ได้ การสั่งงานจะ Kubernetes Master นั้นต้องสั่งผ่าน API เท่านั้น โดยสามารถสั่งได้ผ่าน Kubernetes CLI หรือ GUI Dashboard ของ Cloud เจ้าต่างๆ 
+
+2. Kubernetes Node (worker node) 
+คือ ส่วนที่จะเป็นที่ไว้ให้ Container หรือ Service ต่างๆ รันอยู่ทำงาน โดยที่ Node เหล่านี้จะถูกควบคุมด้วย Kubernetes Master (control plane) อีกที 
+
+##### Kubernetes Detail Architecture
+
+![alt text](image-28.png)
+
+##### Kubernetes Cluster
+
+![alt text](image-29.png)
+
+##### Orchestration Technologies
+
+![alt text](image-30.png)
+
+##### Setup Kubernetes
+
+![alt text](image-31.png)
+
+##### Single node Cluster with Docker Desktop or Minikube
+
+![alt text](image-32.png)
+
+##### Multiple node Cluster with Kind in Docker Desktop
+
+![alt text](image-33.png)
+
+![alt text](image.png)
+
+##### แนะนำ Tools จัดการ Kubernetes Cluster สำหรับนักพัฒนา
+
+![alt text](image-34.png)
+
+![alt text](image-35.png)
+
+![alt text](image-36.png)
+
+### ⚡ Day 3
+
+- [x] Section 4: พื้นฐานและภาพรวม Kubernetes (ต่อ)
+- [x] Section 5: การสร้าง Pod และ Deployment
+- [x] Section 6: การสร้างและใช้งาน Services
+
+##### เก็บตกเนื้อหาของวันที่ 2
+
+อัพเดทเรื่อง Docker กับ Database ทั้ง 7 ประกอบด้วย
+
+- PostgreSQL
+- MySQL
+- MariaDB
+- SQLServer
+- Oracle
+- MongoDB
+- SQLite
+
+Clone Project ตัวอย่างได้ที่
+📥 [7DBDocker](https://github.com/iamsamitdev/7DBDcoker)
+
+docker-compose.yml
+```yaml
+networks:
+  app_network:
+    name: app_network
+    driver: bridge
+
+services:
+  # PostgresSQL Service
+  postgres:
+    image: postgres:latest
+    container_name: postgres_db
+    environment:
+      POSTGRES_USER: myuser
+      POSTGRES_PASSWORD: 123456
+      POSTGRES_DB: storedb
+    ports:
+      - "6432:5432"
+    volumes:
+      - ./volumes/postgres:/var/lib/postgresql/data # Mount volume
+      - ./sql/init_postgresql.sql:/docker-entrypoint-initdb.d/init.sql # init script
+    networks:
+      - app_network
+    restart: always
+  
+  # MySQL Service
+  mysql:
+    image: mysql:latest
+    container_name: mysql_db
+    environment:
+      MYSQL_ROOT_PASSWORD: 123456
+      MYSQL_DATABASE: storedb
+      MYSQL_USER: myuser
+      MYSQL_PASSWORD: 123456
+    ports:
+      - "5506:3306"
+    volumes:
+      - ./volumes/mysql:/var/lib/mysql  # Mount volume สำหรับ MySQL
+      - ./sql/init_mysql.sql:/docker-entrypoint-initdb.d/init.sql
+    networks:
+      - app_network
+    restart: always
+
+  # MariaDB Service
+  mariadb:
+    image: mariadb:latest
+    container_name: mariadb_db
+    environment:
+      MYSQL_ROOT_PASSWORD: 123456
+      MYSQL_DATABASE: storedb
+      MYSQL_USER: myuser
+      MYSQL_PASSWORD: 123456
+    ports:
+      - "6607:3306"
+    volumes:
+      - ./volumes/mariadb:/var/lib/mysql  # Mount volume สำหรับ MariaDB
+      - ./sql/init_mariadb.sql:/docker-entrypoint-initdb.d/init.sql
+    networks:
+      - app_network
+    restart: always
+  
+  # SQL Server Service (Azure SQL Edge)
+  mssql:
+    image: mcr.microsoft.com/azure-sql-edge:latest
+    container_name: mssql_db
+    environment:
+      ACCEPT_EULA: Y
+      MSSQL_SA_PASSWORD: "MyPassword@123"
+      MSSQL_DATABASE: storedb
+    ports:
+      - "1533:1433"
+    volumes:
+      - ./volumes/mssql:/var/opt/mssql  # Mount volume สำหรับ SQL Server
+      - ./sql/init_sqlserver.sql:/var/opt/mssql/init.sql  # Mount SQL init file
+    networks:
+      - app_network
+    restart: always
+  
+  # Oracle Service
+  oracle:
+    image: gvenzl/oracle-free:latest
+    container_name: oracle_db
+    environment:
+      - ORACLE_PASSWORD=MyPassword@123
+      - APP_USER=my_user
+      - APP_USER_PASSWORD=MyPassword@123
+      - ORACLE_SID=FREE
+      - ORACLE_DATABASE=storedb
+      - ORACLE_LISTENER_PORT=1521
+    ports:
+      - "1621:1521"
+    volumes:
+      - ./volumes/oracle:/opt/oracle/oradata  # Mount volume สำหรับ Oracle
+      - ./sql/init_oracle.sql:/docker-entrypoint-initdb.d/init.sql
+    restart: always
+    networks:
+    - app_network
+
+  # MongoDB Service
+  mongo:
+    image: mongo:latest
+    container_name: mongo_db
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: myuser
+      MONGO_INITDB_ROOT_PASSWORD: 123456
+      MONGO_INITDB_DATABASE: storedb
+    ports:
+      - "37017:27017"
+    volumes:
+      - ./volumes/mongodb:/data/db  # Mount volume สำหรับ MongoDB
+      - ./sql/init_mongodb.js:/docker-entrypoint-initdb.d/init.js  # Use JS script for init
+    networks:
+      - app_network
+    restart: always
+
+  # SQLite Service
+  sqlite:
+    platform: linux/arm64  # เปลี่ยนเป็น ARM สำหรับ macOS M1
+    image: keinos/sqlite3:latest  # ใช้ image ที่รองรับ ARM
+    container_name: sqlite_db
+    environment:
+      DB_PATH: /data/storedb.db
+    volumes:
+      - ./data:/data  # Mount volume สำหรับ SQLite
+      - ./sql:/docker-entrypoint-initdb.d  # Mount ไฟล์ SQL ที่จะใช้ init
+    command: sh -c "sqlite3 /data/storedb.db < /docker-entrypoint-initdb.d/init_sqlite.sql && tail -f /dev/null"  # รันไฟล์ SQL แล้วให้ container ทำงานต่อ
+    networks:
+      - app_network
+    restart: always
+```
+
+##### ตัวอย่าง MERN Stack ด้วย Docker Compose
+
+Clone Project ตัวอย่างได้ที่
+📥 [mernstack](https://github.com/iamsamitdev/mernstack)
+
+![alt text](image-37.png)
+
+docker-compose.yml
 ```yaml
 networks:
   mern_network:
@@ -425,13 +869,13 @@ services:
     build: mongodb/
     image: mern_mongodb:1.0
     container_name: mern_mongodb
-    volumes:
-      - ./mongodb/db:/data/db
     ports:
-      - 27017:27017
-    restart: always
+      - "47017:27017"
+    volumes:
+      - ./mongodb/data:/data/db  # Mount volume สำหรับ MongoDB
     networks:
       - mern_network
+    restart: always
   
   # NodeJS Service
   nodejs:
@@ -443,6 +887,7 @@ services:
     volumes:
       - /usr/app/node_modules
       - ./nodejs:/usr/app
+      - ./nodejs/public/images/products:/usr/app/public/images/products
     ports:
       - 4000:3000
     environment:
@@ -454,29 +899,32 @@ services:
       - mern_network
 
   # React Service
-  react:
+  reactjs:
     depends_on:
       - nodejs
-    build: reactjs/
+    build: 
+      context: reactjs/
+      dockerfile: Dockerfile.prod
     image: mern_react:1.0
     container_name: mern_react
     volumes:
       - /usr/app/node_modules
       - ./reactjs:/usr/app
     ports:
-      - 8181:3000
+      - 8811:80 # Production
     restart: always
     networks:
       - mern_network
 ```
 
-##### การ Tag และ Push Image ไปยัง Docker Hub
+#### พื้นฐานและภาพรวม Kubernetes
 
-![alt text](image-23.png)
-
-```bash
-docker tag my-node-app:1.0 my-node-app:latest
-docker logout
-docker login
-docker push my-node-app:latest
-```
+<ul>
+  <li>Kubernetes Overview</li>
+  <li>Kubernetes architecture</li>
+  <li>Pod</li>
+  <li>Deployment</li>
+  <li>Services</li>
+  <li>Namespace</li>
+  <li>ReplicaSet</li>
+</ul>

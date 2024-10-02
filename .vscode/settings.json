@@ -2,4 +2,5 @@
     "workbench.statusBar.visible": true,
     "editor.minimap.enabled": false,
     "editor.renderWhitespace": "none",
+    "workbench.activityBar.location": "default",
 }
