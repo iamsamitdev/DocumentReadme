@@ -434,7 +434,7 @@ class TodoListView(APIView):
         return Response(serializer.data)
 ```
 
-\#14.8 แก้ไขไฟล์ urls.py
+\#14.8 แก้ไขไฟล์ urls.py ใน firstdjango/urls.py
 ```python
 from django.contrib import admin
 from django.urls import path
