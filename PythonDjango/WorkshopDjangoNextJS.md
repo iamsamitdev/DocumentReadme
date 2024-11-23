@@ -76,9 +76,9 @@ source env/bin/activate
 ```
 
 ##### #6. การติดตั้ง Django
-\#6.1 ติดตั้ง Django 4.2.2
+\#6.1 ติดตั้ง Django 5.1.3
 ```bash
-pip install django==4.2.2
+pip install django==5.1.3
 ```
 \#6.2 เช็ครายการ Package ที่ติดตั้งแล้ว
 ```bash
@@ -370,12 +370,26 @@ touch templates/test.html
 ```
 
 ##### #14. Django REST Framework
-\#14.1 ติดตั้ง Django REST Framework
+
+\#14.1 สร้างแอพพลิเคชันใหม่ชื่อ "todo" ในโปรเจคบน macOS and Linux and Windows
+```bash
+python manage.py startapp todo
+```
+
+\#14.2 แก้ไขไฟล์ settings.py
+```python
+INSTALLED_APPS = [
+    ...
+    'todo',
+]
+```
+
+\#14.3 ติดตั้ง Django REST Framework
 ```bash
 pip install djangorestframework
 ```
 
-\#14.2 แก้ไขไฟล์ settings.py
+\#14.4 แก้ไขไฟล์ settings.py
 ```python
 INSTALLED_APPS = [
     ...
@@ -383,17 +397,19 @@ INSTALLED_APPS = [
 ]
 ```
 
-\#14.3 สร้างไฟล์ model "Todo" ในโปรเจคบน macOS and Linux and Windows
+\#14.5 สร้างไฟล์ model "model.py" ใน firstdjango/models.py
 ```bash
 from django.db import models
 
-class Todo(models.Model):
+class Todo(models.Model): 
     title = models.CharField(max_length=255)
     description = models.TextField()
     completed = models.BooleanField(default=False)
+    class Meta:
+        app_label = 'todo'
 ```
 
-\#14.4 สร้างไฟล์ serializer "TodoSerializer" ในโปรเจคบน macOS and Linux and Windows
+\#14.6 สร้างไฟล์ serializer "todoSerializer.py" ใน firstdjango/todoSerializer.py
 ```bash
 from rest_framework import serializers
 from .models import Todo
@@ -404,12 +420,12 @@ class TodoSerializer(serializers.ModelSerializer):
         fields = ['title', 'description', 'completed']
 ```
 
-\#14.5 สร้างไฟล์ view "TodoListView" ในโปรเจคบน macOS and Linux and Windows
+\#14.7 สร้างไฟล์ view "todoListView.py" ใน firstdjango/todoListView.py
 ```bash
-from rest_framework.view import APIView
+from rest_framework.views import APIView
 from rest_framework.response import Response
 from .models import Todo
-from .serializers import TodoSerializer
+from .todoSerializer import TodoSerializer
 
 class TodoListView(APIView):
     def get(self, request):
@@ -418,15 +434,29 @@ class TodoListView(APIView):
         return Response(serializer.data)
 ```
 
-\#14.6 แก้ไขไฟล์ urls.py
+\#14.8 แก้ไขไฟล์ urls.py
 ```python
+from django.contrib import admin
 from django.urls import path
-from .views import TodoListView
+from . import views
+from .todoListView import TodoListView
 
 urlpatterns = [
     ...
+    # API todo
     path('api/todos', TodoListView.as_view(), name='todos'),
 ]
 ```
 
-\#14.7 ทดสอบการทำงานของ API ด้วย Postman/ Thunder Client หรือ Insomnia โดยใช้ URL http://localhost:8000/api/todos
+\#14.9 สร้างฐานข้อมูลและสร้างตารางใหม่
+```bash
+python manage.py makemigrations
+python manage.py migrate
+```
+
+\#14.10 รันโปรแกรม Django
+```bash
+python manage.py runserver
+```
+
+\#14.11 ทดสอบการทำงานของ API ด้วย Postman/ Thunder Client หรือ Insomnia โดยใช้ URL http://localhost:8000/api/todos
